@@ -11,7 +11,7 @@ module.exports.add = function add(name, phone, email) {
     if (isValidPhone(phone) && isValidEmail(email)) {
         var newPerson = {
             name: name,
-            phone: phone.replace(/\+|\s|-|\(|\)/g, ''),
+            phone: phone.replace(/\D/g, ''),
             email: email
         };
         phoneBook.push(newPerson);
@@ -25,52 +25,55 @@ module.exports.add = function add(name, phone, email) {
 */
 function isValidPhone(phone) {
     var rePhone = /^(\+?\d{1,2})?\s?(\(\d{3}\)|(\d{3}))\s?(\d{3})(\s|-)?(\d{1})(\s|-)?(\d{3})$/;
-    return rePhone.exec(phone) === null ? false : true;
+    return rePhone.test(phone);
 }
 
 /*
  Функция, определяющая валидность email
  */
 function isValidEmail(email) {
-    var reEmail = /^(\w)+@[A-Za-zА-Яа-я0-9_-]+\.[A-Za-zА-Яа-я0-9_]+(\.([A-Za-zА-Яа-я0-9_])+)?/;
-    return reEmail.exec(email) === null ? false : true;
+    var reEmail = /^(\w)+@[A-Za-zА-Яа-яёЁ0-9_-]+\.[A-Za-zА-Яа-яёЁ0-9_]+(\.([A-Za-zА-Яа-яёЁ0-9_])+)?/;
+    return reEmail.test(email);
 }
 
 /*
    Функция поиска записи в телефонную книгу.
    Поиск ведется по всем полям.
 */
-module.exports.find = function find(query) {
-    if (query === null) {
-        for (var i = 0; i < phoneBook.length; i++) {
-            console.log(phoneBook[i].name + ', ' + phoneBook[i].phone + ', ' + phoneBook[i].email);
+module.exports.find = function find(query, parent) {
+    var isFound = [];
+    if (query === undefined || query == '') {
+        for (var i = 0, contactsLength = phoneBook.length; i < contactsLength; i++) {
+            console.log(phoneBook[i].name + ', ' + getCorrectPhone(phoneBook[i].phone) +
+                        ', ' + phoneBook[i].email);
         }
     } else {
-        for (var i = 0; i < phoneBook.length; i++) {
+        for (var i = 0, contactsLength = phoneBook.length; i < contactsLength; i++) {
             if (phoneBook[i].name.indexOf(query) != -1 ||
                 phoneBook[i].phone.indexOf(query) != -1 ||
                 phoneBook[i].email.indexOf(query) != -1) {
-                console.log(phoneBook[i].name + ', ' + getCorrectPhone(phoneBook[i].phone) +
-                            ', ' + phoneBook[i].email);
-
+                if (parent === undefined) {
+                    console.log(phoneBook[i].name + ', ' + getCorrectPhone(phoneBook[i].phone) +
+                        ', ' + phoneBook[i].email);
+                }
+                isFound.push(i);
             }
         }
     }
+    return isFound;
 };
 
 /*
    Функция удаления записи в телефонной книге.
 */
 module.exports.remove = function remove(query) {
-    var countDel = 0;
-    for (var i = 0; i < phoneBook.length; i++) {
-        if (phoneBook[i].name.localeCompare(query) == 0) {
-            phoneBook.splice(i, 1);
-            countDel++;
-        }
+    var pointToDelete = module.exports.find(query, true);
+    var countOfPoint = pointToDelete.length;
+    for (var i = 0; i < countOfPoint; i++) {
+        phoneBook.splice(pointToDelete[i], 1);
     }
-    console.log(countDel.toString() + ' contacts deleted');
-    return countDel;
+    console.log(countOfPoint.toString() + ' contacts deleted');
+    return countOfPoint;
 };
 
 /*
@@ -114,7 +117,8 @@ module.exports.showTable = function showTable(filename) {
     var nameWidth = 0;
     var phoneWidth = 22;
     var emailWidth = 0;
-    for (var i = 0; i < phoneBook.length; i++) {
+    var contactsLength = phoneBook.length;
+    for (var i = 0; i < contactsLength; i++) {
         nameWidth = max(nameWidth, phoneBook[i].name.length);
         emailWidth = max(emailWidth, phoneBook[i].email.length);
     }
@@ -125,7 +129,7 @@ module.exports.showTable = function showTable(filename) {
     console.log(frame[0]);
 
     var phoneTable = table.fatVertical;
-    for (var i = 0; i < phoneBook.length; i++) {
+    for (var i = 0; i < contactsLength; i++) {
         console.log(frame[2]);
         for (var j = 0; j < nameWidth + phoneWidth + emailWidth + 7; j++) {
             switch (j) {
@@ -174,7 +178,7 @@ module.exports.showTable = function showTable(filename) {
         console.log(phoneTable + ' ' + table.fatVertical);
         phoneTable = table.fatVertical;
         console.log(frame[2]);
-        if (i == phoneBook.length - 1) {
+        if (i == contactsLength - 1) {
             console.log(frame[3]);
         } else {
             console.log(frame[1]);
@@ -232,13 +236,14 @@ function getFrame(table, nameWidth, phoneWidth, emailWidth) {
     Функция делает телефонный номер красивым, для вывода на экран
 */
 function getCorrectPhone(phone) {
-    var correctPhone = '(' + phone.substr(phone.length - 10, 3) + ') ' +
-                        phone.substr(phone.length - 7, 3) + '-' + phone[phone.length - 4] +
-                        '-' + phone.substr(phone.length - 3, 3);
-    correctPhone = phone.length == 10 ?
-                   '+7 ' + correctPhone : phone.substr(0, phone.length - 10) + ' ' + correctPhone;
+    var phoneLength = phone.length;
+    var correctPhone = '(' + phone.substr(phoneLength - 10, 3) + ') ' +
+                        phone.substr(phoneLength - 7, 3) + '-' + phone[phoneLength - 4] +
+                        '-' + phone.substr(phoneLength - 3, 3);
+    correctPhone = phoneLength == 10 ?
+                   '+7 ' + correctPhone : phone.substr(0, phoneLength - 10) + ' ' + correctPhone;
     if (correctPhone[0] != '+') {
-        correctPhone = phone.length == 10 ? '+7 ' + correctPhone : '+' + correctPhone;
+        correctPhone = phoneLength == 10 ? '+7 ' + correctPhone : '+' + correctPhone;
     }
     return correctPhone;
 }
