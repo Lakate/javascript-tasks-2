@@ -1,7 +1,7 @@
 'use strict';
 
 var phoneBook = [];
-
+var SPACE_COUNT = 7;
 /*
    Функция добавления записи в телефонную книгу.
    На вход может прийти что угодно, будьте осторожны.
@@ -41,8 +41,8 @@ function isValidEmail(email) {
    Поиск ведется по всем полям.
 */
 module.exports.find = function find(query, parent) {
-    var isFound = [];
-    if (query === undefined || query == '') {
+    var foundContacts = [];
+    if (!query) {
         for (var i = 0, contactsLength = phoneBook.length; i < contactsLength; i++) {
             console.log(phoneBook[i].name + ', ' + getCorrectPhone(phoneBook[i].phone) +
                         ', ' + phoneBook[i].email);
@@ -56,11 +56,11 @@ module.exports.find = function find(query, parent) {
                     console.log(phoneBook[i].name + ', ' + getCorrectPhone(phoneBook[i].phone) +
                         ', ' + phoneBook[i].email);
                 }
-                isFound.push(i);
+                foundContacts.push(i);
             }
         }
     }
-    return isFound;
+    return foundContacts;
 };
 
 /*
@@ -119,8 +119,8 @@ module.exports.showTable = function showTable(filename) {
     var emailWidth = 0;
     var contactsLength = phoneBook.length;
     for (var i = 0; i < contactsLength; i++) {
-        nameWidth = max(nameWidth, phoneBook[i].name.length);
-        emailWidth = max(emailWidth, phoneBook[i].email.length);
+        nameWidth = Math.max(nameWidth, phoneBook[i].name.length);
+        emailWidth = Math.max(emailWidth, phoneBook[i].email.length);
     }
     nameWidth += 2;
     emailWidth += 2;
@@ -131,7 +131,7 @@ module.exports.showTable = function showTable(filename) {
     var phoneTable = table.fatVertical;
     for (var i = 0; i < contactsLength; i++) {
         console.log(frame[2]);
-        for (var j = 0; j < nameWidth + phoneWidth + emailWidth + 7; j++) {
+        for (var j = 0; j < nameWidth + phoneWidth + emailWidth + SPACE_COUNT; j++) {
             switch (j) {
                 case 1:
                     phoneTable += phoneBook[i].name;
@@ -170,7 +170,7 @@ module.exports.showTable = function showTable(filename) {
                 case nameWidth + phoneWidth + 6:
                     phoneTable += '  ';
                     break;
-                case nameWidth + phoneWidth + emailWidth + 7:
+                case nameWidth + phoneWidth + emailWidth + SPACE_COUNT:
                     phoneTable += '  ';
                     break;
             }
@@ -187,22 +187,12 @@ module.exports.showTable = function showTable(filename) {
 };
 
 /*
-    Функция нахождения максимума
-*/
-function max(a, b) {
-    if (a > b) {
-        return a;
-    }
-    return b;
-}
-
-/*
     Функция строит остов таблицы - т.е. те строки, которые в ней повторяются.
 */
 function getFrame(table, nameWidth, phoneWidth, emailWidth) {
     var frame = [table.leftUpCorner, table.leftThinHorizontal,
                  table.fatVertical, table.leftDownCorner];
-    for (var i = 0; i < nameWidth + phoneWidth + emailWidth + 7; i++) {
+    for (var i = 0; i < nameWidth + phoneWidth + emailWidth + SPACE_COUNT; i++) {
         if (i == nameWidth + 3) {
             frame[0] += table.thinToDown;
             frame[1] += table.thinCrossroad;
